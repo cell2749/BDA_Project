@@ -14,7 +14,7 @@ parameters {
 model {
 // Change to multivariate? With alpha and beta from hier prior
   mu ~ normal(mu0, sigma0); // population prior with unknown parameters
-  y ~ normal(mu[x], sigma);
+  y ~ double_exponential(mu[x], sigma);
 }
 generated quantities {
   vector[K] ypred;
@@ -23,11 +23,11 @@ generated quantities {
   vector[N] log_lik;
   // Samples for seventh machine
   mpred = normal_rng(mu0,sigma0);
-  mypred = normal_rng(mpred,sigma);
+  mypred = double_exponential_rng(mpred, sigma);
   // Samples for six machines
   for (i in 1:K)
-    ypred[i] = normal_rng(mu[i], sigma);
+    ypred[i] = double_exponential_rng(mu[i], sigma);
   // Log_likelihood for psis_loo values
   for (i in 1:N)
-    log_lik[i] = normal_lpdf(y[i] | mu[x[i]], sigma);
+    log_lik[i] = double_exponential_lpdf(y[i] | mu[x[i]], sigma);
 }

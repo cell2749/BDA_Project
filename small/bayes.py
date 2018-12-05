@@ -1,10 +1,16 @@
 import matplotlib
-import matplotlib.pyplot as plot
+import matplotlib.pyplot as plt
 import numpy as np
 import pystan
 import pandas as pd
 import glob
 from psis import psisloo
+import winsound
+
+# Sound for code finishing
+duration = 2000  # millisecond
+freq = 440  # Hz
+
 
 small_data_path = "../data/small/"
 smallFiles = glob.glob(small_data_path + "*.csv")
@@ -15,8 +21,10 @@ smallFiles = glob.glob(small_data_path + "*.csv")
 # "price",
 # "txVol",
 # "fees"
+psi_comparisons = {}
 
-def psispeffk(log_lik):
+
+def psispeffk(log_lik, name):
     loo, loos, kw = psisloo(log_lik)
     print("\n")
     print("psis-loo:", loo)
@@ -33,18 +41,20 @@ def psispeffk(log_lik):
             err_1 += 1
         else:
             err_inf += 1
-    print("\n")
-    print("K-VALUES:\n")
-    print("(-inf;0.5] &", err_05, "&", 100 * err_05 / len(kw), "\%\\\\\\hline")
-    print("(0.5;0.7] &", err_07, "&", 100 * err_07 / len(kw), "\%\\\\\\hline")
-    print("(0.7;1.0] &", err_1, "&", 100 * err_1 / len(kw), "\%\\\\\\hline")
-    print("(1.0;inf) &", err_inf, "&", 100 * err_inf / len(kw), "\%\\\\\\hline")
     _sum = 0
     for i in range(0, 30):
         _sum += np.log(np.mean(np.exp(log_lik[:, i])))
-    print("\n")
-    print("p_eff:", _sum - loo)
 
+    psi_comparisons[name] = "psis-loo: " + str(
+        loo) + " " + "K-VALUES:\n" + "\n" + " " + "(-inf;0.5] &" + " " + str(
+        err_05) + " " + "&" + " " + str(
+        100 * err_05 / len(kw)) + "\n" + " " + "(0.5;0.7] &" + " " + str(
+        err_07) + " " + "&" + " " + str(
+        100 * err_07 / len(kw)) + "\n" + " " + "(0.7;1.0] &" + " " + str(
+        err_1) + " " + "&" + " " + str(
+        100 * err_1 / len(kw)) + "\n" + " " + "(1.0;inf) &" + " " + str(
+        err_inf) + " " + "&" + " " + str(100 * err_inf / len(
+        kw)) + "\n" + " " + "\n" + "\n" + " " + "p_eff:" + str(_sum - loo)
     return 0
 
 
@@ -70,24 +80,48 @@ def Bayesian_Procedure_hier(hier_data):
     print("Number of coins/groups:", K)
     print("Total number of observations:", N * K)
     # 3 Summary statistic - scatter plot or histogram
-    # 4 Model
-    with open('single_bayes.stan', 'r') as stan_file:
-        stan_code = stan_file.read()
-    hier_model = pystan.StanModel(model_code=stan_code)
+    # 4 Models
+    stan_names = [
+        "norm_single.stan",
+        "lognormal.stan",
+        "chi.stan",
+        "inv_chi.stan",
+        "weibull.stan"
+        # "t_single.stan",
+        # "laplace_single.stan"
+    ]
     h_flat = np.array(np.transpose(k_groups_single)).flatten()
     h_x = np.tile(np.arange(1, K + 1), N)
-    stan_data = dict(
-        N=len(h_flat),
-        K=K,
-        x=h_x,
-        y=h_flat
-    )
-    # Stan results
-    fit = hier_model.sampling(data=stan_data)
-    print(fit)
-    samples = fit.extract(permuted=True)
-    psispeffk(samples["log_lik"])
+    plt.hist(np.log(h_flat), bins=50, rwidth=1)
+    plt.grid(False)
+    plt.title("log prices")
+    plt.savefig("log_prices_hist.png")
+    plt.clf()
+    plt.hist(h_flat, bins=50, rwidth=1)
+    plt.grid(False)
+    plt.title("pure prices")
+    plt.savefig("prices_hist.png")
+    plt.clf()
+    for stan_name in stan_names:
+        print(stan_name)
+        with open("stan/" + stan_name, 'r') as stan_file:
+            stan_code = stan_file.read()
+        hier_model = pystan.StanModel(model_code=stan_code)
+
+        stan_data = dict(
+            N=len(h_flat),
+            K=K,
+            x=h_x,
+            y=h_flat,
+            low=np.nextafter(0, 1)
+        )
+        # Stan results
+        fit = hier_model.sampling(data=stan_data)
+        print(fit)
+        samples = fit.extract(permuted=True)
+        psispeffk(samples["log_lik"], stan_name)
     return 0
+
 
 if __name__ == '__main__':
     coins = {}
@@ -96,3 +130,7 @@ if __name__ == '__main__':
         coins[name] = pd.read_csv(file, index_col=0)
 
     Bayesian_Procedure_hier(coins)
+    for name in psi_comparisons:
+        print(name)
+        print(psi_comparisons[name])
+    winsound.Beep(freq, duration)
