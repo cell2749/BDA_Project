@@ -1,7 +1,7 @@
 import pandas as pd
 import glob
 import matplotlib.pyplot as plt
-import numpy as np
+import os
 
 small_data_path = "../data/small/"
 smallFiles = glob.glob(small_data_path + "*.csv")
@@ -22,18 +22,21 @@ for file in smallFiles:
     df = pd.read_csv(file, index_col=0)
     features = df.columns
     date = features[0]
-    name = file.split("\\")[1].split(".")[0]
+    name = file.split(os.sep)[-1].split(".")[0]
+    df.drop(columns=[date], inplace=True)
+
+    # Normalize data frame
+    df = (df - df.mean()) / (df.max() - df.min())
+
     for _i in range(1, len(features)):
         for __i in range(_i + 1, len(features)):
-            df_norm_i = (df[features[_i]] - df[features[_i]].mean()) / (
-                df[features[_i]].max() - df[features[_i]].min())
-            df_norm__i = (df[features[__i]] - df[features[__i]].mean()) / (
-                df[features[__i]].max() - df[features[__i]].min())
+            normalized_feature_1 = df[features[_i]]
+            normalized_feature_2 = df[features[__i]]
 
             ax = axes[GLOB_COUNTER // GRAPH_ADJ, GLOB_COUNTER % GRAPH_ADJ]
 
             ax.set_title(features[__i] + " - " + features[_i])
-            ax.scatter(df_norm__i, df_norm_i)
+            ax.scatter(normalized_feature_2, normalized_feature_1)
             ax.set_xlabel(features[__i])
             ax.set_ylabel(features[_i])
 
