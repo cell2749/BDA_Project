@@ -11,10 +11,10 @@ import winsound
 duration = 2000  # millisecond
 freq = 440  # Hz
 
-
 small_data_path = "../data/small/"
 smallFiles = glob.glob(small_data_path + "*.csv")
-
+big_data_path = "../data/big/"
+bigFiles = glob.glob(big_data_path + "*.csv")
 # Features:
 # "date",
 # "marketcap",
@@ -22,8 +22,6 @@ smallFiles = glob.glob(small_data_path + "*.csv")
 # "txVol",
 # "fees"
 psi_comparisons = {}
-
-
 def psispeffk(log_lik, name):
     loo, loos, kw = psisloo(log_lik)
     print("\n")
@@ -58,22 +56,38 @@ def psispeffk(log_lik, name):
     return 0
 
 
-def Bayesian_Procedure_hier(hier_data):
+def Bayesian_Procedure_hier(hier_data, id_name):
     # hier_data should be in the form:
-    #
-    # 1 Conceptual Analysis tx/fee = 1/x, price - non-normal
+    # 1 Conceptual Analysis, price - non-normal
     # 2 Define Observations. Range of values - from -1 to 1 if normalised.
-    CAUSE_FEATURE = "meanFee"
-    EFFECT_FEATURE = "txVol"
-    SINGLE_FEATURE = "price"
-    k_groups_cause = []
-    k_groups_effect = []
     k_groups_single = []
+    # left_set = ["xvg", "dgb"]
+    # right_set = ["waves", "pivx", "vtc"]
     for coin in hier_data:
-        print(coin)
-        k_groups_single.append(hier_data[coin][SINGLE_FEATURE].tolist())
-        k_groups_cause.append(hier_data[coin][CAUSE_FEATURE].tolist())
-        k_groups_effect.append(hier_data[coin][EFFECT_FEATURE].tolist())
+        # xrp is bugged
+        if coin != "xrp":
+            # print(coin)
+            mc = hier_data[coin]["marketcap"].tolist()[-1] // 1000000
+            # print(mc)
+            # if coin not in weird_coins:
+            data = hier_data[coin]["price"].tolist()
+            print(coin, len(data))
+            log_data = np.log(data)
+
+            k_groups_single.append(log_data)
+            plt.hist(np.log(data), bins=50,
+                     rwidth=1, alpha=0.7, label=coin + " " + str(mc))
+            # plt.grid(False)
+            # plt.title("log prices")
+            # plt.legend()
+            # plt.savefig(coin+"log_i_prices_hist.png")
+            # plt.clf()
+
+    plt.grid(False)
+    plt.title("log prices")
+    plt.legend()
+    plt.savefig(id_name + "log_i_prices_hist.png")
+    plt.clf()
     N = len(k_groups_single[0])
     K = len(k_groups_single)
     print("Number of observations per group/coin:", N)
@@ -82,32 +96,24 @@ def Bayesian_Procedure_hier(hier_data):
     # 3 Summary statistic - scatter plot or histogram
     # 4 Models
     stan_names = [
+        # "norm_mix.stan"
         "norm_single.stan",
-        "lognormal.stan",
-        "chi.stan",
-        "inv_chi.stan",
-        "weibull.stan"
-        # "t_single.stan",
-        # "laplace_single.stan"
+        # "lognormal.stan",
+        # "chi.stan",
+        # "inv_chi.stan",
+        # "weibull.stan"
+        "laplace_single.stan",
+        "logistic.stan",
+        "cauchy.stan"
     ]
-    h_flat = np.array(np.transpose(k_groups_single)).flatten()
+    h_flat = np.transpose(k_groups_single).flatten()
     h_x = np.tile(np.arange(1, K + 1), N)
-    plt.hist(np.log(h_flat), bins=50, rwidth=1)
-    plt.grid(False)
-    plt.title("log prices")
-    plt.savefig("log_prices_hist.png")
-    plt.clf()
-    plt.hist(h_flat, bins=50, rwidth=1)
-    plt.grid(False)
-    plt.title("pure prices")
-    plt.savefig("prices_hist.png")
-    plt.clf()
     for stan_name in stan_names:
         print(stan_name)
         with open("stan/" + stan_name, 'r') as stan_file:
             stan_code = stan_file.read()
+        print(h_flat.shape)
         hier_model = pystan.StanModel(model_code=stan_code)
-
         stan_data = dict(
             N=len(h_flat),
             K=K,
@@ -118,6 +124,7 @@ def Bayesian_Procedure_hier(hier_data):
         # Stan results
         fit = hier_model.sampling(data=stan_data)
         print(fit)
+        print(type(fit))
         samples = fit.extract(permuted=True)
         psispeffk(samples["log_lik"], stan_name)
     return 0
@@ -129,7 +136,18 @@ if __name__ == '__main__':
         name = file.split("\\")[1].split(".")[0]
         coins[name] = pd.read_csv(file, index_col=0)
 
-    Bayesian_Procedure_hier(coins)
+    Bayesian_Procedure_hier(coins, "small")
+    small_psi = psi_comparisons
+    coins = {}
+    for file in bigFiles:
+        name = file.split("\\")[1].split(".")[0]
+        coins[name] = pd.read_csv(file, index_col=0)
+
+    Bayesian_Procedure_hier(coins, "big")
+    print("small")
+    for name in small_psi:
+        print(name)
+        print(small_psi[name])
     for name in psi_comparisons:
         print(name)
         print(psi_comparisons[name])
