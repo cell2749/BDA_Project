@@ -8,7 +8,7 @@ data {
 parameters {
 	real alpha;
 	real beta;
-	real sigma;
+	real<lower=0> sigma;
 }
 transformed parameters {
   vector[N] mu;
