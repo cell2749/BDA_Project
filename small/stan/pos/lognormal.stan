@@ -7,10 +7,10 @@ data {
     real low;
 }
 parameters {
-    real<lower=0> mu0;             // prior mean
-    real<lower=0> sigma0; // prior std
-    vector<lower=0>[K] mu;         // group means
-    real<lower=0> sigma;  // common std
+    real<lower=low> mu0;             // prior mean
+    real<lower=low> sigma0; // prior std
+    vector<lower=low>[K] mu;         // group means
+    real<lower=low> sigma;  // common std
 }
 model {
 // Change to multivariate? With alpha and beta from hier prior
