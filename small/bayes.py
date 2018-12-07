@@ -5,7 +5,11 @@ import pystan
 import pandas as pd
 import glob
 from psis import psisloo
-import winsound
+import platform
+import os
+
+if platform.system() == 'Windows':
+    import winsound
 
 # Sound for code finishing
 duration = 2000  # millisecond
@@ -133,7 +137,7 @@ def Bayesian_Procedure_hier(hier_data, id_name):
 if __name__ == '__main__':
     coins = {}
     for file in smallFiles:
-        name = file.split("\\")[1].split(".")[0]
+        name = file.split(os.sep)[-1].split(".")[0]
         coins[name] = pd.read_csv(file, index_col=0)
 
     Bayesian_Procedure_hier(coins, "small")
@@ -151,4 +155,6 @@ if __name__ == '__main__':
     for name in psi_comparisons:
         print(name)
         print(psi_comparisons[name])
-    winsound.Beep(freq, duration)
+
+    if platform.system() == 'Windows':
+        winsound.Beep(freq, duration)

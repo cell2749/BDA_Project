@@ -1,5 +1,6 @@
 import pandas as pd
 import glob
+import os
 
 small_data_path = "./data/small/"
 big_data_path = "./data/big/"
@@ -34,7 +35,7 @@ for file in allFiles:
         # Check next data set
         continue
     else:
-        crypto_name = file.split("\\")[1].split(".")[0]
+        crypto_name = file.split(os.sep)[-1].split(".")[0]
         # Ignore stellar as the data is outdated
         if crypto_name != "xlm":
             # Record market cap for big/small selection
