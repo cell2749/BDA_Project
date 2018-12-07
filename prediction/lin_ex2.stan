@@ -10,13 +10,21 @@ parameters {
 	real beta;
 	real sigma;
 }
+transformed parameters {
+  vector[N] mu;
+  mu = alpha + beta*x;
+}
 model {
 	beta ~ normal(0, 1);
-	y ~ normal(alpha + beta*x, sigma);
+	y ~ normal(mu, sigma);
 }
 generated quantities {
 	vector[M] ypreds; // Predictions based on hypothetical future prices of coin 1
+	vector[N] log_lik;
 	for(i in 1:M) {
 		ypreds[i] = normal_rng(alpha + beta*xpreds[i], sigma);
+	}
+	for (i in 1:N){
+        log_lik[i] = normal_lpdf(y[i] | mu[i], sigma);
 	}
 }
