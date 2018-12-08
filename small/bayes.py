@@ -114,7 +114,7 @@ def Bayesian_Procedure_hier(hier_data, id_name, _cheap_coins):
         plt.clf()
     k_set = {
         "cheap": k_cheap
-        #"expensive": k_exp
+        "expensive": k_exp
     }
     for k_sub_name in k_set:
         k_groups = k_set[k_sub_name]
@@ -183,24 +183,23 @@ def Bayesian_Procedure_hier(hier_data, id_name, _cheap_coins):
 
 
 if __name__ == '__main__':
-    #coins = {}
-    #for file in smallFiles:
-    #    name = file.split("\\")[1].split(".")[0]
-    #    coins[name] = pd.read_csv(file, index_col=0)
-    #cheap_coins = ["dgb", "xvg"]
-    #Bayesian_Procedure_hier(coins, "small", cheap_coins)
-    #for name in PSIS_COMPARISONS:
-    #    with open("psis_loo_vals.txt", "a") as text_file:
-    #        print(
-    #            "small\n" + name + "\n" + PSIS_COMPARISONS[name],
-    #            file=text_file
-    #        )
-    #PSIS_COMPARISONS={}
+    coins = {}
+    for file in smallFiles:
+        name = file.split("\\")[1].split(".")[0]
+        coins[name] = pd.read_csv(file, index_col=0)
+    cheap_coins = ["dgb", "xvg"]
+    Bayesian_Procedure_hier(coins, "small", cheap_coins)
+    for name in PSIS_COMPARISONS:
+        with open("psis_loo_vals.txt", "a") as text_file:
+            print(
+                "small\n" + name + "\n" + PSIS_COMPARISONS[name],
+                file=text_file
+            )
+    PSIS_COMPARISONS={}
     coins = {}
     for file in bigFiles:
         name = file.split("\\")[1].split(".")[0]
-        if name=="ada":
-            coins[name] = pd.read_csv(file, index_col=0)
+        coins[name] = pd.read_csv(file, index_col=0)
     cheap_coins = ["ada"]
     Bayesian_Procedure_hier(coins, "big", cheap_coins)
     for name in PSIS_COMPARISONS:
