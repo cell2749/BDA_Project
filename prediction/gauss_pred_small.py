@@ -24,8 +24,27 @@ data = data[['date', 'BTC price', 'LTC price', 'DASH price', 'ETH price', 'ETC p
 print(data.head(5))
 data.drop(columns=['date'], inplace=True)
 
+
+def print_loo_and_ks(samples):
+    from psis import psisloo
+
+    loglik = samples['log_lik']
+    loo, loos, ks = psisloo(loglik)
+    print("Loo: %.2f" % loo)
+
+    ks_sum = [[
+        (ks <= 0.5).sum(),
+        sum([1 for k in ks if k > 0.5 and k <= 0.7]),
+        (ks > 0.7).sum()
+    ]]
+
+    ks_df = pd.DataFrame(ks_sum, columns=["k<=0.5", "0.5<k<=0.7", "0.7<k"])
+    print(ks_df)
+
+
 def normalize(values):
     return (values - values.mean())
+
 
 m = 5
 
@@ -48,18 +67,22 @@ model = stan_utility.compile_model('../prediction/lin_ex2.stan')
 data1 = dict(N=n, M=m, x=x, y=y1, xpreds=p)
 fit1 = model.sampling(data=data1, seed=74749)
 samples1 = fit1.extract(permuted=True)
+print_loo_and_ks(samples1)
 
 data2 = dict(N=n, M=m, x=x, y=y2, xpreds=p)
 fit2 = model.sampling(data=data2, seed=74749)
 samples2 = fit2.extract(permuted=True)
+print_loo_and_ks(samples2)
 
 data3 = dict(N=n, M=m, x=x, y=y3, xpreds=p)
 fit3 = model.sampling(data=data3, seed=74749)
 samples3 = fit3.extract(permuted=True)
+print_loo_and_ks(samples3)
 
 data4 = dict(N=n, M=m, x=x, y=y4, xpreds=p)
 fit4 = model.sampling(data=data4, seed=74749)
 samples4 = fit4.extract(permuted=True)
+print_loo_and_ks(samples4)
 
 f, axes = plt.subplots(2, 2, figsize=(14, 10), sharex=True)
 preds = samples1['ypreds'].T
@@ -67,6 +90,8 @@ ax = axes[0, 0]
 ax.scatter(x, y1, label='Price DGB/BTC')
 ax.set_ylabel('DGB price')
 ax.set_xlabel('BTC price')
+ax.spines['right'].set_visible(False)
+ax.spines['top'].set_visible(False)
 for i in range(m):
     ax.scatter([p[i]] * len(preds[i]), preds[i], alpha=0.01, c='g')
     ax.scatter(p[i], np.mean(preds[i]), c='r')
@@ -76,6 +101,8 @@ ax = axes[0, 1]
 ax.scatter(x, y2, label='Price GAS/BTC')
 ax.set_ylabel('GAS price')
 ax.set_xlabel('BTC price')
+ax.spines['right'].set_visible(False)
+ax.spines['top'].set_visible(False)
 for i in range(m):
     ax.scatter([p[i]] * len(preds[i]), preds[i], alpha=0.01, c='g')
     ax.scatter(p[i], np.mean(preds[i]), c='r')
@@ -85,6 +112,8 @@ ax = axes[1, 0]
 ax.scatter(x, y3, label='Price VTC/BTC')
 ax.set_ylabel('VTC price')
 ax.set_xlabel('BTC price')
+ax.spines['right'].set_visible(False)
+ax.spines['top'].set_visible(False)
 for i in range(m):
     ax.scatter([p[i]] * len(preds[i]), preds[i], alpha=0.01, c='g')
     ax.scatter(p[i], np.mean(preds[i]), c='r')
@@ -94,10 +123,17 @@ ax = axes[1, 1]
 ax.scatter(x, y4, label='Price XVG/BTC')
 ax.set_ylabel('XVG price')
 ax.set_xlabel('BTC price')
+ax.spines['right'].set_visible(False)
+ax.spines['top'].set_visible(False)
 for i in range(m):
     ax.scatter([p[i]] * len(preds[i]), preds[i], alpha=0.01, c='g')
     ax.scatter(p[i], np.mean(preds[i]), c='r')
 
-plt.legend(loc='best')
-plt.savefig('predicting_small_coins_2.png')
+import matplotlib.patches as mpatches
+
+red_patch = mpatches.Patch(color='red', )
+green_patch = mpatches.Patch(color='green')
+f.legend([red_patch, green_patch], ['mean', 'spread'], loc='upper right', ncol=1)
+f.suptitle("Gaussian linear prediction small coins", fontsize=14)
+plt.savefig('predicting_small_coins_gauss.png')
 plt.show()
