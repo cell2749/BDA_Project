@@ -1,10 +1,12 @@
 // Linear student-t model
+// Modified from from original lin_t.stan by Aki Vehtari
+// Available at: https://github.com/avehtari/BDA_py_demos/blob/master/demos_pystan/lin_t.stan
 data {
     int<lower=0> N; // number of data points
     int<lower=0> M;	// number of prediction points
-    vector[N] x; //
-    vector[N] y; //
-    vector[M] xpreds; // input location for prediction
+    vector[N] x; // Bitcoin prices
+    vector[N] y; // Coin x prices
+    vector[M] xpreds; // prediction points
 }
 parameters {
     real alpha;

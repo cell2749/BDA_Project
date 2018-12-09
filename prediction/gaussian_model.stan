@@ -1,8 +1,8 @@
 data {
     int<lower=0> N;	// number of data points
     int<lower=0> M;	// number of prediction points
-    vector[N] x;	// Coin 1
-    vector[N] y;	// Coin 2
+    vector[N] x;	// Bitcoin prices
+    vector[N] y;	// Coin x prices
     vector[M] xpreds;	// Coin 1 hypothetical future prices
 }
 parameters {
