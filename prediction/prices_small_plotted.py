@@ -6,9 +6,6 @@ import sys
 
 sys.path.append('../')
 
-import pystan
-import stan_utility
-
 data = pd.read_csv('/home/jonatan/projects/school/BDA_Project/data/selected/combined.csv', delimiter=",")
 data.columns = ['date', 'LTC mCap', 'LTC price', 'LTC  exVol',
                 'LTC fees', 'LTC  txVol', 'ETH mCap',

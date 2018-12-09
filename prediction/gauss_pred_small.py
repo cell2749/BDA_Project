@@ -6,7 +6,6 @@ import sys
 
 sys.path.append('../')
 
-import pystan
 import stan_utility
 
 data = pd.read_csv('/home/jonatan/projects/school/BDA_Project/data/selected/combined.csv', delimiter=",")
