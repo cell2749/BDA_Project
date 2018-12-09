@@ -113,7 +113,7 @@ def Bayesian_Procedure_hier(hier_data, id_name, _cheap_coins):
         plt.savefig(id_name + "_" + g_sub_name + "_prices.png")
         plt.clf()
     k_set = {
-        "cheap": k_cheap
+        "cheap": k_cheap,
         "expensive": k_exp
     }
     for k_sub_name in k_set:
